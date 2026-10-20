@@ -16,10 +16,20 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.hasanhoca.canliders.capture.MeetingRecordingSession;
 import com.hasanhoca.canliders.capture.SharedScreenCapture;
+import com.hasanhoca.canliders.meeting.MeshMeetingClient;
 
+import org.webrtc.AudioSource;
+import org.webrtc.AudioTrack;
+import org.webrtc.EglBase;
+import org.webrtc.MediaConstraints;
 import org.webrtc.PeerConnectionFactory;
+import org.webrtc.SurfaceViewRenderer;
+import org.webrtc.VideoTrack;
+import org.webrtc.audio.JavaAudioDeviceModule;
+import org.webrtc.audio.AudioDeviceModule;
 
 import java.io.IOException;
+import java.util.UUID;
 
 /** Jitsi arayüzünden bağımsız, tablet odaklı öğretmen toplantı ekranı. */
 public final class NativeMeetingActivity extends AppCompatActivity {
@@ -31,9 +41,17 @@ public final class NativeMeetingActivity extends AppCompatActivity {
     private Button shareButton;
     private Button recordButton;
     private PeerConnectionFactory peerFactory;
+    private AudioDeviceModule audioDeviceModule;
+    private AudioSource audioSource;
+    private AudioTrack audioTrack;
+    private EglBase rendererEgl;
+    private SurfaceViewRenderer remoteRenderer;
+    private MeshMeetingClient meetingClient;
     private SharedScreenCapture screenCapture;
     private MeetingRecordingSession recordingSession;
     private boolean recording;
+    private boolean teacherMode;
+    private String roomCode;
 
     private final ActivityResultLauncher<Intent> screenPermission =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -53,8 +71,8 @@ public final class NativeMeetingActivity extends AppCompatActivity {
         recordButton = findViewById(R.id.recordButton);
         Button endButton = findViewById(R.id.endLessonButton);
 
-        String roomCode = getIntent().getStringExtra("roomCode");
-        boolean teacherMode = getIntent().getBooleanExtra("teacherMode", false);
+        roomCode = getIntent().getStringExtra("roomCode");
+        teacherMode = getIntent().getBooleanExtra("teacherMode", false);
         TextView title = findViewById(R.id.meetingTitle);
         title.setText((teacherMode ? "Öğretmen odası • " : "Öğrenci odası • ")
                 + (roomCode == null ? "Ders" : roomCode));
@@ -65,8 +83,24 @@ public final class NativeMeetingActivity extends AppCompatActivity {
 
         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions
                 .builder(getApplicationContext()).createInitializationOptions());
-        peerFactory = PeerConnectionFactory.builder().createPeerConnectionFactory();
+        audioDeviceModule = JavaAudioDeviceModule.builder(this)
+                .setSampleRate(48_000)
+                .setUseStereoInput(false)
+                .setSamplesReadyCallback(samples -> {
+                    MeetingRecordingSession active = recordingSession;
+                    if (active != null) {
+                        active.getAudioCallback().onWebRtcAudioRecordSamplesReady(samples);
+                    }
+                }).createAudioDeviceModule();
+        peerFactory = PeerConnectionFactory.builder()
+                .setAudioDeviceModule(audioDeviceModule)
+                .createPeerConnectionFactory();
+        audioSource = peerFactory.createAudioSource(new MediaConstraints());
+        audioTrack = peerFactory.createAudioTrack("HASAN_HOCA_MIC", audioSource);
+        initializeRemoteRenderer();
         status.setText("Hazır — ekranınızı paylaşabilirsiniz");
+
+        if (!teacherMode) connectMeeting(null);
 
         shareButton.setOnClickListener(v -> requestScreenShare());
         recordButton.setOnClickListener(v -> toggleRecording());
@@ -94,6 +128,7 @@ public final class NativeMeetingActivity extends AppCompatActivity {
             screenCapture = new SharedScreenCapture(this, peerFactory, permissionData,
                     recordingSession.getVideoSink());
             screenCapture.start(CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_FPS);
+            connectMeeting(screenCapture.getVideoTrack());
             shareButton.setText("Paylaşımı durdur");
             recordButton.setEnabled(true);
             status.setText("Ekranınız öğrencilere paylaşılıyor");
@@ -101,6 +136,39 @@ public final class NativeMeetingActivity extends AppCompatActivity {
             status.setText("Kayıt hazırlanamadı");
             Toast.makeText(this, error.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void initializeRemoteRenderer() {
+        rendererEgl = EglBase.create();
+        remoteRenderer = new SurfaceViewRenderer(this);
+        remoteRenderer.init(rendererEgl.getEglBaseContext(), null);
+        remoteRenderer.setEnableHardwareScaler(true);
+        remoteRenderer.setMirror(false);
+        android.widget.FrameLayout container = findViewById(R.id.videoContainer);
+        container.addView(remoteRenderer, new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+    }
+
+    private void connectMeeting(VideoTrack sharedScreen) {
+        if (meetingClient != null) meetingClient.close();
+        meetingClient = new MeshMeetingClient(peerFactory, teacherMode, sharedScreen,
+                audioTrack, new MeshMeetingClient.Listener() {
+            @Override public void onReady() {
+                runOnUiThread(() -> status.setText("Ders odasına bağlanıldı"));
+            }
+            @Override public void onRemoteVideo(String participantId, VideoTrack track) {
+                runOnUiThread(() -> track.addSink(remoteRenderer));
+            }
+            @Override public void onParticipantLeft(String participantId) {
+                runOnUiThread(() -> status.setText("Bir öğrenci dersten ayrıldı"));
+            }
+            @Override public void onError(String message) {
+                runOnUiThread(() -> status.setText("Bağlantı hatası: " + message));
+            }
+        });
+        meetingClient.connect(BuildConfig.SIGNALING_URL, roomCode,
+                UUID.randomUUID().toString());
     }
 
     private void toggleRecording() {
@@ -128,8 +196,14 @@ public final class NativeMeetingActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if (screenCapture != null) screenCapture.release();
+        if (meetingClient != null) meetingClient.close();
+        if (remoteRenderer != null) remoteRenderer.release();
+        if (rendererEgl != null) rendererEgl.release();
+        if (audioTrack != null) audioTrack.dispose();
+        if (audioSource != null) audioSource.dispose();
         if (recordingSession != null) recordingSession.close();
         if (peerFactory != null) peerFactory.dispose();
+        if (audioDeviceModule != null) audioDeviceModule.release();
         super.onDestroy();
     }
 }

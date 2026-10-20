@@ -13,6 +13,11 @@ android {
         versionCode = 5
         versionName = "1.0.4"
         vectorDrawables.useSupportLibrary = true
+        buildConfigField("String", "SIGNALING_URL", "\"wss://hasan-hoca-oda.workers.dev\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
