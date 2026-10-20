@@ -28,10 +28,26 @@
         <activity
             android:name=".ScreenShareActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
-            android:exported="false"
+            android:exported="true"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustResize">
+            <!-- Google ile toplantı sahibi doğrulaması tamamlanınca Jitsi'nin
+                 dönüş bağlantısını açık toplantı ekranına teslim eder. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:host="meet.jit.si" android:scheme="https" />
+                <data android:host="beta.meet.jit.si" android:scheme="https" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="org.jitsi.meet" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>
