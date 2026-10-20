@@ -66,6 +66,11 @@ public class MainActivity extends AppCompatActivity {
                     .setFeatureFlag("pip-while-screen-sharing.enabled", true)
                     .setFeatureFlag("toolbox.enabled", true)
                     .setFeatureFlag("recording.enabled", true)
+                    // meet.jit.si'nin Google doğrulamasından sonra resmi Jitsi
+                    // uygulamasına gitmesini engelleyip yeniden bize dönmesini ister.
+                    .setConfigOverride("deeplinking.android.appName", "Hasan Hoca Canlı Ders")
+                    .setConfigOverride("deeplinking.android.appScheme", "hasanhocacanliders")
+                    .setConfigOverride("deeplinking.android.appPackage", getPackageName())
                     .setConfigOverride("toolbarButtons", new String[] {
                             "microphone", "camera", "chat", "raisehand",
                             "participants-pane", "tileview", "screensharing",
