@@ -10,10 +10,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.jitsi.meet.sdk.JitsiMeetConferenceOptions;
-
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -52,40 +48,11 @@ public class MainActivity extends AppCompatActivity {
                 .replaceAll("[^a-z0-9ğüşöçı-]", "-")
                 .replaceAll("-+", "-");
 
-        try {
-            JitsiMeetConferenceOptions options = new JitsiMeetConferenceOptions.Builder()
-                    .setServerURL(new URL("https://meet.jit.si"))
-                    .setRoom("HasanHoca-" + safeRoom)
-                    .setSubject("Hasan Hoca Canlı Ders")
-                    .setAudioMuted(false)
-                    .setVideoMuted(!teacherMode)
-                    .setFeatureFlag("welcomepage.enabled", false)
-                    .setFeatureFlag("prejoinpage.enabled", true)
-                    .setFeatureFlag("android.screensharing.enabled", true)
-                    .setFeatureFlag("pip.enabled", true)
-                    .setFeatureFlag("pip-while-screen-sharing.enabled", true)
-                    .setFeatureFlag("toolbox.enabled", true)
-                    .setFeatureFlag("recording.enabled", true)
-                    // meet.jit.si'nin Google doğrulamasından sonra resmi Jitsi
-                    // uygulamasına gitmesini engelleyip yeniden bize dönmesini ister.
-                    .setConfigOverride("deeplinking.android.appName", "Hasan Hoca Canlı Ders")
-                    .setConfigOverride("deeplinking.android.appScheme", "hasanhocacanliders")
-                    .setConfigOverride("deeplinking.android.appPackage", getPackageName())
-                    .setConfigOverride("toolbarButtons", new String[] {
-                            "microphone", "camera", "chat", "raisehand",
-                            "participants-pane", "tileview", "screensharing",
-                            "desktop", "overflowmenu", "hangup"
-                    })
-                    .setConfigOverride("displayName", TextUtils.isEmpty(displayName)
-                            ? (teacherMode ? "Hasan Hoca" : "Öğrenci") : displayName)
-                    .build();
-
-            Intent meetingIntent = new Intent(this, ScreenShareActivity.class);
-            meetingIntent.setAction("org.jitsi.meet.CONFERENCE");
-            meetingIntent.putExtra("JitsiMeetConferenceOptions", options);
-            startActivity(meetingIntent);
-        } catch (MalformedURLException e) {
-            Toast.makeText(this, "Toplantı sunucusu açılamadı.", Toast.LENGTH_LONG).show();
-        }
+        Intent meetingIntent = new Intent(this, NativeMeetingActivity.class);
+        meetingIntent.putExtra("roomCode", "HasanHoca-" + safeRoom);
+        meetingIntent.putExtra("displayName", TextUtils.isEmpty(displayName)
+                ? (teacherMode ? "Hasan Hoca" : "Öğrenci") : displayName);
+        meetingIntent.putExtra("teacherMode", teacherMode);
+        startActivity(meetingIntent);
     }
 }

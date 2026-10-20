@@ -53,6 +53,16 @@ public final class NativeMeetingActivity extends AppCompatActivity {
         recordButton = findViewById(R.id.recordButton);
         Button endButton = findViewById(R.id.endLessonButton);
 
+        String roomCode = getIntent().getStringExtra("roomCode");
+        boolean teacherMode = getIntent().getBooleanExtra("teacherMode", false);
+        TextView title = findViewById(R.id.meetingTitle);
+        title.setText((teacherMode ? "Öğretmen odası • " : "Öğrenci odası • ")
+                + (roomCode == null ? "Ders" : roomCode));
+        if (!teacherMode) {
+            shareButton.setVisibility(android.view.View.GONE);
+            recordButton.setVisibility(android.view.View.GONE);
+        }
+
         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions
                 .builder(getApplicationContext()).createInitializationOptions());
         peerFactory = PeerConnectionFactory.builder().createPeerConnectionFactory();
