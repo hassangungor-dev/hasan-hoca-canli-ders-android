@@ -28,6 +28,10 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".NativeMeetingActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
             android:name=".ScreenShareActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
             android:exported="true"
