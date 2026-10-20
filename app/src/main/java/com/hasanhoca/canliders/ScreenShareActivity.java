@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -73,13 +72,8 @@ public class ScreenShareActivity extends JitsiMeetActivity {
 
     private void openScreenRecorder() {
         Toast.makeText(this,
-                "Panelde Ekran kaydedici düğmesine dokunun; ses için Medya ve mikrofonu seçin.",
+                "Üstten iki kez aşağı kaydırın, Ekran kaydediciye dokunun; Medya ve mikrofonu seçin.",
                 Toast.LENGTH_LONG).show();
-        try {
-            startActivity(new Intent(Settings.ACTION_QUICK_SETTINGS_SETTINGS));
-        } catch (Exception ignored) {
-            startActivity(new Intent(Settings.ACTION_SETTINGS));
-        }
     }
 
     private void toggleScreenShare() {
