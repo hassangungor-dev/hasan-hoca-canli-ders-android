@@ -41,5 +41,6 @@ android {
 dependencies {
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.12.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jitsi.react:jitsi-meet-sdk:13.1.1") { isTransitive = true }
 }
