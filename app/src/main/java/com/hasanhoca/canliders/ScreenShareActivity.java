@@ -11,7 +11,6 @@ import android.widget.FrameLayout;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import org.jitsi.meet.sdk.BroadcastAction;
 import org.jitsi.meet.sdk.JitsiMeetActivity;
 
 public class ScreenShareActivity extends JitsiMeetActivity {
@@ -48,7 +47,7 @@ public class ScreenShareActivity extends JitsiMeetActivity {
 
     private void toggleScreenShare() {
         sharing = !sharing;
-        Intent intent = new Intent(BroadcastAction.Type.TOGGLE_SCREEN_SHARE.getAction());
+        Intent intent = new Intent("org.jitsi.meet.TOGGLE_SCREEN_SHARE");
         intent.putExtra("enabled", sharing);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
         shareButton.setText(sharing ? "Paylaşımı durdur" : "Ekranı paylaş");
