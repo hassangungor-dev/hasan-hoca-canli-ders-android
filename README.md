@@ -8,6 +8,7 @@ Samsung tabletler, Android telefonlar ve öğrencilerin mobil cihazları için c
 - Öğretmen ve öğrenci girişleri
 - Kamera ve mikrofon
 - Android ekran paylaşımı
+- Google ile toplantı sahibi doğrulamasından sonra toplantıya otomatik dönüş
 - Resim içinde resim desteği
 - Açık renk, tablet uyumlu arayüz
 
