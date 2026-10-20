@@ -1,0 +1,3 @@
+-keep class org.jitsi.** { *; }
+-keep class com.facebook.react.** { *; }
+-dontwarn org.jitsi.**
