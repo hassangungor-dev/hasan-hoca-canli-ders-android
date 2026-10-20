@@ -66,6 +66,11 @@ public class MainActivity extends AppCompatActivity {
                     .setFeatureFlag("pip-while-screen-sharing.enabled", true)
                     .setFeatureFlag("toolbox.enabled", true)
                     .setFeatureFlag("recording.enabled", true)
+                    .setConfigOverride("toolbarButtons", new String[] {
+                            "microphone", "camera", "chat", "raisehand",
+                            "participants-pane", "tileview", "screensharing",
+                            "desktop", "overflowmenu", "hangup"
+                    })
                     .setConfigOverride("displayName", TextUtils.isEmpty(displayName)
                             ? (teacherMode ? "Hasan Hoca" : "Öğrenci") : displayName)
                     .build();
