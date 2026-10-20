@@ -58,11 +58,7 @@ public final class SharedScreenCapture {
     }
 
     public void stop() {
-        try {
-            capturer.stopCapture();
-        } catch (InterruptedException ignored) {
-            Thread.currentThread().interrupt();
-        }
+        capturer.stopCapture();
     }
 
     public void release() {
