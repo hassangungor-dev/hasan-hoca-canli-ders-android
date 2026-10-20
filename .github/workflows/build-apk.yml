@@ -43,5 +43,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v1.0.1 >/dev/null 2>&1 || gh release create v1.0.1 --title "Hasan Hoca Canlı Ders v1.0.1" --notes "Ekran paylaşımı düğmesi görünür hâle getirildi." --latest
-          gh release upload v1.0.1 Hasan-Hoca-Canli-Ders.apk --clobber
+          gh release view v1.0.2 >/dev/null 2>&1 || gh release create v1.0.2 --title "Hasan Hoca Canlı Ders v1.0.2" --notes "Toplantı ekranına doğrudan ekran paylaşımı düğmesi eklendi." --latest
+          gh release upload v1.0.2 Hasan-Hoca-Canli-Ders.apk --clobber

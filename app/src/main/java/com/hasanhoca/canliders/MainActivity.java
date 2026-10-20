@@ -1,6 +1,7 @@
 package com.hasanhoca.canliders;
 
 import android.os.Bundle;
+import android.content.Intent;
 import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
@@ -9,7 +10,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.jitsi.meet.sdk.JitsiMeetActivity;
 import org.jitsi.meet.sdk.JitsiMeetConferenceOptions;
 
 import java.net.MalformedURLException;
@@ -75,7 +75,10 @@ public class MainActivity extends AppCompatActivity {
                             ? (teacherMode ? "Hasan Hoca" : "Öğrenci") : displayName)
                     .build();
 
-            JitsiMeetActivity.launch(this, options);
+            Intent meetingIntent = new Intent(this, ScreenShareActivity.class);
+            meetingIntent.setAction("org.jitsi.meet.CONFERENCE");
+            meetingIntent.putExtra("JitsiMeetConferenceOptions", options);
+            startActivity(meetingIntent);
         } catch (MalformedURLException e) {
             Toast.makeText(this, "Toplantı sunucusu açılamadı.", Toast.LENGTH_LONG).show();
         }
