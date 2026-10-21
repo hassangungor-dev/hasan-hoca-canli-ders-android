@@ -10,8 +10,8 @@ android {
         applicationId = "com.hasanhoca.canliders"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.0.6"
+        versionCode = 8
+        versionName = "1.0.7"
         vectorDrawables.useSupportLibrary = true
         buildConfigField("String", "SIGNALING_URL", "\"wss://hasan-hoca-canli-ders-server.onrender.com\"")
     }
