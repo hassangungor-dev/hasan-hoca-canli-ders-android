@@ -30,19 +30,19 @@ jobs:
         run: gradle :app:assembleDebug --stacktrace
 
       - name: APK adını düzenle
-        run: cp app/build/outputs/apk/debug/app-debug.apk Hasan-Hoca-Canli-Ders-v1.0.6.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk Hasan-Hoca-Canli-Ders-v1.0.7.apk
 
       - name: APK dosyasını sakla
         uses: actions/upload-artifact@v4
         with:
           name: Hasan-Hoca-Canli-Ders-APK
-          path: Hasan-Hoca-Canli-Ders-v1.0.6.apk
+          path: Hasan-Hoca-Canli-Ders-v1.0.7.apk
           retention-days: 90
 
       - name: Herkese açık indirme bağlantısını yayınla
-        if: github.ref == 'refs/heads/native-tablet-v2'
+        if: github.ref == 'refs/heads/native-tablet-v2' && contains(github.event.head_commit.message, '[release]')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v1.0.6 >/dev/null 2>&1 || gh release create v1.0.6 --title "Hasan Hoca Canlı Ders v1.0.6" --notes "Tablet için canlı ders, ekran paylaşımı ve cihazda kayıt özellikleri."
-          gh release upload v1.0.6 Hasan-Hoca-Canli-Ders-v1.0.6.apk --clobber
+          gh release view v1.0.7 >/dev/null 2>&1 || gh release create v1.0.7 --title "Hasan Hoca Canlı Ders v1.0.7" --notes "Zoom benzeri sade toplantı ekranı; mikrofon, ekran paylaşımı, kayıt ve dersi bitirme düğmeleri tek alt menüde."
+          gh release upload v1.0.7 Hasan-Hoca-Canli-Ders-v1.0.7.apk --clobber
