@@ -30,18 +30,18 @@ jobs:
         run: gradle :app:assembleDebug --stacktrace
 
       - name: APK adını düzenle
-        run: cp app/build/outputs/apk/debug/app-debug.apk Hasan-Hoca-Canli-Ders.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk Hasan-Hoca-Canli-Ders-v1.0.7.apk
 
       - name: APK dosyasını sakla
         uses: actions/upload-artifact@v4
         with:
-          name: Hasan-Hoca-Canli-Ders-APK
-          path: Hasan-Hoca-Canli-Ders.apk
+          name: Hasan-Hoca-Canli-Ders-v1.0.7-APK
+          path: Hasan-Hoca-Canli-Ders-v1.0.7.apk
           retention-days: 90
 
       - name: Herkese açık indirme bağlantısını yayınla
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v1.0.3 >/dev/null 2>&1 || gh release create v1.0.3 --title "Hasan Hoca Canlı Ders v1.0.3" --notes "Google ile toplantı sahibi doğrulamasından sonra toplantıya otomatik dönüş eklendi. Ekran paylaşımı düğmesi toplantı ekranında görünür." --latest
-          gh release upload v1.0.3 Hasan-Hoca-Canli-Ders.apk --clobber
+          gh release view v1.0.7 >/dev/null 2>&1 || gh release create v1.0.7 --title "Hasan Hoca Canlı Ders v1.0.7" --notes "Kaydı başlat düğmesi artık ekran görüntüsünü ve mikrofon sesini birlikte MP4 olarak kaydeder. Kayıt Galeri içindeki Hasan Hoca klasörüne gelir." --latest
+          gh release upload v1.0.7 Hasan-Hoca-Canli-Ders-v1.0.7.apk --clobber

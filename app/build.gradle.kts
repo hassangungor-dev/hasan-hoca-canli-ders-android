@@ -10,8 +10,8 @@ android {
         applicationId = "com.hasanhoca.canliders"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.0.4"
+        versionCode = 8
+        versionName = "1.0.7"
         vectorDrawables.useSupportLibrary = true
     }
 
