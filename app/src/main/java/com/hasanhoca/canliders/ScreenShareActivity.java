@@ -114,7 +114,7 @@ public class ScreenShareActivity extends JitsiMeetActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_SCREEN_CAPTURE) {
             if (resultCode == RESULT_OK && data != null) {
                 Intent serviceIntent = new Intent(this, ScreenRecorderService.class);
