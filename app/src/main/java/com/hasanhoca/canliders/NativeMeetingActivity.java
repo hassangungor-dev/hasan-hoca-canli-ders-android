@@ -42,6 +42,7 @@ public final class NativeMeetingActivity extends AppCompatActivity {
     private TextView status;
     private Button shareButton;
     private Button recordButton;
+    private Button micButton;
     private PeerConnectionFactory peerFactory;
     private AudioDeviceModule audioDeviceModule;
     private AudioSource audioSource;
@@ -52,6 +53,7 @@ public final class NativeMeetingActivity extends AppCompatActivity {
     private SharedScreenCapture screenCapture;
     private MeetingRecordingSession recordingSession;
     private boolean recording;
+    private boolean microphoneMuted;
     private boolean teacherMode;
     private boolean meetingInitialized;
     private String roomCode;
@@ -83,6 +85,8 @@ public final class NativeMeetingActivity extends AppCompatActivity {
         status = findViewById(R.id.meetingStatus);
         shareButton = findViewById(R.id.shareScreenButton);
         recordButton = findViewById(R.id.recordButton);
+        micButton = findViewById(R.id.micButton);
+        Button participantsButton = findViewById(R.id.participantsButton);
         Button endButton = findViewById(R.id.endLessonButton);
 
         roomCode = getIntent().getStringExtra("roomCode");
@@ -98,8 +102,11 @@ public final class NativeMeetingActivity extends AppCompatActivity {
         shareButton.setEnabled(false);
         recordButton.setEnabled(false);
 
+        micButton.setOnClickListener(v -> toggleMicrophone());
         shareButton.setOnClickListener(v -> requestScreenShare());
         recordButton.setOnClickListener(v -> toggleRecording());
+        participantsButton.setOnClickListener(v -> Toast.makeText(this,
+                "Katılımcılar bağlandıkça ders ekranında görünecek.", Toast.LENGTH_SHORT).show());
         endButton.setOnClickListener(v -> finishLesson());
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
@@ -137,13 +144,21 @@ public final class NativeMeetingActivity extends AppCompatActivity {
         if (!teacherMode) connectMeeting(null);
     }
 
+    private void toggleMicrophone() {
+        if (audioTrack == null) return;
+        microphoneMuted = !microphoneMuted;
+        audioTrack.setEnabled(!microphoneMuted);
+        micButton.setText(microphoneMuted ? "🔇\nSesi aç" : "🎙\nSessiz");
+        status.setText(microphoneMuted ? "Mikrofon kapatıldı" : "Mikrofon açıldı");
+    }
+
     private void requestScreenShare() {
         if (screenCapture != null) {
             if (recording) stopRecording();
             screenCapture.release();
             screenCapture = null;
             stopService(new Intent(this, ScreenCaptureService.class));
-            shareButton.setText("Ekranı paylaş");
+            shareButton.setText("▣\nEkranı paylaş");
             recordButton.setEnabled(false);
             status.setText("Ekran paylaşımı durduruldu");
             return;
@@ -158,7 +173,7 @@ public final class NativeMeetingActivity extends AppCompatActivity {
             screenCapture = new SharedScreenCapture(this, peerFactory, permissionData);
             screenCapture.start(CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_FPS);
             connectMeeting(screenCapture.getVideoTrack());
-            shareButton.setText("Paylaşımı durdur");
+            shareButton.setText("■\nPaylaşımı durdur");
             recordButton.setEnabled(true);
             status.setText("Ekranınız öğrencilere paylaşılıyor");
         } catch (RuntimeException error) {
@@ -212,7 +227,7 @@ public final class NativeMeetingActivity extends AppCompatActivity {
                     CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_FPS);
             screenCapture.addRecordingSink(recordingSession.getVideoSink());
             recording = true;
-            recordButton.setText("Kaydı bitir");
+            recordButton.setText("■\nKaydı bitir");
             status.setText("Ekran ve mikrofon kaydediliyor");
         } catch (IOException error) {
             status.setText("Kayıt başlatılamadı");
@@ -223,7 +238,7 @@ public final class NativeMeetingActivity extends AppCompatActivity {
     private void stopRecording() {
         if (!recording || recordingSession == null) return;
         recording = false;
-        recordButton.setText("Kaydı başlat");
+        recordButton.setText("●\nKayıt");
         status.setText("Kayıt tamamlanıyor…");
         MeetingRecordingSession completed = recordingSession;
         recordingSession = null;
