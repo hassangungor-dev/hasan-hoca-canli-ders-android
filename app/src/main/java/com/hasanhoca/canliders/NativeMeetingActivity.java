@@ -3,6 +3,7 @@ package com.hasanhoca.canliders;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.hasanhoca.canliders.capture.MeetingRecordingSession;
 import com.hasanhoca.canliders.capture.SharedScreenCapture;
@@ -51,7 +53,14 @@ public final class NativeMeetingActivity extends AppCompatActivity {
     private MeetingRecordingSession recordingSession;
     private boolean recording;
     private boolean teacherMode;
+    private boolean meetingInitialized;
     private String roomCode;
+
+    private final ActivityResultLauncher<String> microphonePermission =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) initializeMeeting();
+                else status.setText("Canlı ders için mikrofon izni gereklidir");
+            });
 
     private final ActivityResultLauncher<Intent> screenPermission =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -59,7 +68,12 @@ public final class NativeMeetingActivity extends AppCompatActivity {
                     status.setText("Ekran paylaşımı izni verilmedi");
                     return;
                 }
-                startSharedCapture(result.getData());
+                ContextCompat.startForegroundService(this,
+                        new Intent(this, ScreenCaptureService.class));
+                // Servisin Android 14+ üzerinde foreground durumuna geçmesine fırsat ver.
+                status.setText("Ekran paylaşımı hazırlanıyor…");
+                new android.os.Handler(android.os.Looper.getMainLooper())
+                        .postDelayed(() -> startSharedCapture(result.getData()), 350);
             });
 
     @Override
@@ -81,6 +95,25 @@ public final class NativeMeetingActivity extends AppCompatActivity {
             recordButton.setVisibility(android.view.View.GONE);
         }
 
+        shareButton.setEnabled(false);
+        recordButton.setEnabled(false);
+
+        shareButton.setOnClickListener(v -> requestScreenShare());
+        recordButton.setOnClickListener(v -> toggleRecording());
+        endButton.setOnClickListener(v -> finishLesson());
+
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED) {
+            initializeMeeting();
+        } else {
+            status.setText("Mikrofon izni bekleniyor…");
+            microphonePermission.launch(android.Manifest.permission.RECORD_AUDIO);
+        }
+    }
+
+    private void initializeMeeting() {
+        if (meetingInitialized) return;
+        meetingInitialized = true;
         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions
                 .builder(getApplicationContext()).createInitializationOptions());
         audioDeviceModule = JavaAudioDeviceModule.builder(this)
@@ -99,18 +132,17 @@ public final class NativeMeetingActivity extends AppCompatActivity {
         audioTrack = peerFactory.createAudioTrack("HASAN_HOCA_MIC", audioSource);
         initializeRemoteRenderer();
         status.setText("Hazır — ekranınızı paylaşabilirsiniz");
+        shareButton.setEnabled(teacherMode);
 
         if (!teacherMode) connectMeeting(null);
-
-        shareButton.setOnClickListener(v -> requestScreenShare());
-        recordButton.setOnClickListener(v -> toggleRecording());
-        endButton.setOnClickListener(v -> finishLesson());
     }
 
     private void requestScreenShare() {
         if (screenCapture != null) {
+            if (recording) stopRecording();
             screenCapture.release();
             screenCapture = null;
+            stopService(new Intent(this, ScreenCaptureService.class));
             shareButton.setText("Ekranı paylaş");
             recordButton.setEnabled(false);
             status.setText("Ekran paylaşımı durduruldu");
@@ -123,17 +155,15 @@ public final class NativeMeetingActivity extends AppCompatActivity {
 
     private void startSharedCapture(Intent permissionData) {
         try {
-            recordingSession = new MeetingRecordingSession(this,
-                    CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_FPS);
-            screenCapture = new SharedScreenCapture(this, peerFactory, permissionData,
-                    recordingSession.getVideoSink());
+            screenCapture = new SharedScreenCapture(this, peerFactory, permissionData);
             screenCapture.start(CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_FPS);
             connectMeeting(screenCapture.getVideoTrack());
             shareButton.setText("Paylaşımı durdur");
             recordButton.setEnabled(true);
             status.setText("Ekranınız öğrencilere paylaşılıyor");
-        } catch (IOException error) {
-            status.setText("Kayıt hazırlanamadı");
+        } catch (RuntimeException error) {
+            stopService(new Intent(this, ScreenCaptureService.class));
+            status.setText("Ekran paylaşımı başlatılamadı");
             Toast.makeText(this, error.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
@@ -172,29 +202,55 @@ public final class NativeMeetingActivity extends AppCompatActivity {
     }
 
     private void toggleRecording() {
-        recording = !recording;
-        recordButton.setText(recording ? "Kaydı bitir" : "Kaydı başlat");
-        status.setText(recording ? "Ekran ve mikrofon kaydediliyor" : "Kayıt tamamlanıyor…");
-        if (!recording && recordingSession != null) {
-            try {
-                Uri saved = recordingSession.finishAndSave();
-                recordingSession = null;
-                status.setText("Kayıt Galeri'ye kaydedildi");
-                Toast.makeText(this, "Ders kaydedildi: " + saved,
-                        Toast.LENGTH_LONG).show();
-            } catch (IOException error) {
-                status.setText("Kayıt kaydedilemedi");
-            }
+        if (screenCapture == null) return;
+        if (recording) {
+            stopRecording();
+            return;
+        }
+        try {
+            recordingSession = new MeetingRecordingSession(this,
+                    CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_FPS);
+            screenCapture.addRecordingSink(recordingSession.getVideoSink());
+            recording = true;
+            recordButton.setText("Kaydı bitir");
+            status.setText("Ekran ve mikrofon kaydediliyor");
+        } catch (IOException error) {
+            status.setText("Kayıt başlatılamadı");
+            Toast.makeText(this, error.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void stopRecording() {
+        if (!recording || recordingSession == null) return;
+        recording = false;
+        recordButton.setText("Kaydı başlat");
+        status.setText("Kayıt tamamlanıyor…");
+        MeetingRecordingSession completed = recordingSession;
+        recordingSession = null;
+        if (screenCapture != null) {
+            screenCapture.removeRecordingSink(completed.getVideoSink());
+        }
+        try {
+            Uri saved = completed.finishAndSave();
+            status.setText("Kayıt Galeri'ye kaydedildi");
+            Toast.makeText(this, "Ders kaydedildi: " + saved,
+                    Toast.LENGTH_LONG).show();
+        } catch (IOException | RuntimeException error) {
+            completed.close();
+            status.setText("Kayıt kaydedilemedi");
+            Toast.makeText(this, "Kayıt hatası: " + error.getMessage(),
+                    Toast.LENGTH_LONG).show();
         }
     }
 
     private void finishLesson() {
-        if (recording && recordingSession != null) toggleRecording();
+        if (recording && recordingSession != null) stopRecording();
         finish();
     }
 
     @Override
     protected void onDestroy() {
+        stopService(new Intent(this, ScreenCaptureService.class));
         if (screenCapture != null) screenCapture.release();
         if (meetingClient != null) meetingClient.close();
         if (remoteRenderer != null) remoteRenderer.release();
