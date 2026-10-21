@@ -30,18 +30,18 @@ jobs:
         run: gradle :app:assembleDebug --stacktrace
 
       - name: APK adını düzenle
-        run: cp app/build/outputs/apk/debug/app-debug.apk Hasan-Hoca-Canli-Ders-v1.0.7.apk
+        run: cp app/build/outputs/apk/debug/app-arm64-v8a-debug.apk Hasan-Hoca-Canli-Ders-v1.0.8-Samsung.apk
 
       - name: APK dosyasını sakla
         uses: actions/upload-artifact@v4
         with:
-          name: Hasan-Hoca-Canli-Ders-v1.0.7-APK
-          path: Hasan-Hoca-Canli-Ders-v1.0.7.apk
+          name: Hasan-Hoca-Canli-Ders-v1.0.8-Samsung
+          path: Hasan-Hoca-Canli-Ders-v1.0.8-Samsung.apk
           retention-days: 90
 
       - name: Herkese açık indirme bağlantısını yayınla
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v1.0.7 >/dev/null 2>&1 || gh release create v1.0.7 --title "Hasan Hoca Canlı Ders v1.0.7" --notes "Kaydı başlat düğmesi artık ekran görüntüsünü ve mikrofon sesini birlikte MP4 olarak kaydeder. Kayıt Galeri içindeki Hasan Hoca klasörüne gelir." --latest
-          gh release upload v1.0.7 Hasan-Hoca-Canli-Ders-v1.0.7.apk --clobber
+          gh release view v1.0.8 >/dev/null 2>&1 || gh release create v1.0.8 --title "Hasan Hoca Canlı Ders v1.0.8" --notes "Samsung tablet için küçültülmüş paket. Mikrofonlu ekran kaydı içerir." --latest
+          gh release upload v1.0.8 Hasan-Hoca-Canli-Ders-v1.0.8-Samsung.apk --clobber
