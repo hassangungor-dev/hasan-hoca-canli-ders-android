@@ -57,7 +57,14 @@ public final class MeshMeetingClient implements SignalingClient.Listener, AutoCl
 
     @Override
     public void onSignal(String senderId, String type, JSONObject payload) {
-        if ("joined".equals(type) && teacher && payload != null) {
+        if ("peers".equals(type) && teacher && payload != null) {
+            org.json.JSONArray participants = payload.optJSONArray("participants");
+            if (participants != null) {
+                for (int index = 0; index < participants.length(); index++) {
+                    createOffer(participants.optString(index));
+                }
+            }
+        } else if ("joined".equals(type) && teacher && payload != null) {
             createOffer(payload.optString("participant"));
         } else if ("left".equals(type) && payload != null) {
             removePeer(payload.optString("participant"));
@@ -108,10 +115,15 @@ public final class MeshMeetingClient implements SignalingClient.Listener, AutoCl
 
     private void acceptOffer(String participantId, String sdp) {
         PeerConnection peer = createPeer(participantId);
-        peer.setRemoteDescription(new SimpleSdpObserver(),
-                new SessionDescription(SessionDescription.Type.OFFER, sdp));
-        peer.createAnswer(new LocalSdpObserver(participantId, "answer", peer),
-                new org.webrtc.MediaConstraints());
+        peer.setRemoteDescription(new SimpleSdpObserver() {
+            @Override public void onSetSuccess() {
+                peer.createAnswer(new LocalSdpObserver(participantId, "answer", peer),
+                        new org.webrtc.MediaConstraints());
+            }
+            @Override public void onSetFailure(String error) {
+                listener.onError("Ders bağlantısı kabul edilemedi: " + error);
+            }
+        }, new SessionDescription(SessionDescription.Type.OFFER, sdp));
     }
 
     private void removePeer(String participantId) {
