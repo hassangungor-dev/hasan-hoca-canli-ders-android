@@ -26,8 +26,7 @@ public final class SharedScreenCapture {
     public SharedScreenCapture(
             Context context,
             PeerConnectionFactory factory,
-            Intent projectionPermission,
-            VideoSink recordingSink) {
+            Intent projectionPermission) {
         eglBase = EglBase.create();
         textureHelper = SurfaceTextureHelper.create(
                 "HasanHocaScreenCapture", eglBase.getEglBaseContext());
@@ -42,11 +41,6 @@ public final class SharedScreenCapture {
         capturer.initialize(textureHelper, context.getApplicationContext(),
                 videoSource.getCapturerObserver());
         videoTrack = factory.createVideoTrack("HASAN_HOCA_SCREEN", videoSource);
-        if (recordingSink != null) {
-            // WebRTC aynı track'i öğrencilere gönderirken bu sink aynı kareleri
-            // MP4 kodlayıcısına aktarır; ikinci MediaProjection açılmaz.
-            videoTrack.addSink(recordingSink);
-        }
     }
 
     public VideoTrack getVideoTrack() {
@@ -55,6 +49,15 @@ public final class SharedScreenCapture {
 
     public void start(int width, int height, int fps) {
         capturer.startCapture(width, height, fps);
+    }
+
+    /** Aynı ekran akışını ikinci MediaProjection açmadan kayıt kodlayıcısına verir. */
+    public void addRecordingSink(VideoSink sink) {
+        videoTrack.addSink(sink);
+    }
+
+    public void removeRecordingSink(VideoSink sink) {
+        videoTrack.removeSink(sink);
     }
 
     public void stop() {
