@@ -24,7 +24,15 @@ export class Room extends DurableObject<Env> {
     const pair = new WebSocketPair();
     const client = pair[0];
     const server = pair[1];
+    const participants = this.ctx.getWebSockets()
+      .map((peer) => this.ctx.getTags(peer)[0])
+      .filter((id): id is string => Boolean(id));
     this.ctx.acceptWebSocket(server, [participant]);
+    server.send(JSON.stringify({
+      sender: "server",
+      type: "peers",
+      payload: { participants },
+    }));
     this.broadcast({ sender: "server", type: "joined", payload: { participant } }, server);
     return new Response(null, { status: 101, webSocket: client });
   }
