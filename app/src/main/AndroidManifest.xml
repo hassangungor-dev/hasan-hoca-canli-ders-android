@@ -19,6 +19,8 @@
         android:theme="@style/Theme.HasanHoca"
         tools:replace="android:label"
         android:usesCleartextTraffic="false">
+        <activity android:name="org.jitsi.meet.sdk.JitsiMeetActivity" tools:node="remove" />
+        <activity android:name=".WhiteboardActivity" android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -35,27 +37,7 @@
             android:launchMode="singleTask"
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true"
-            android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:host="meet.jit.si" android:scheme="https" />
-                <data android:host="beta.meet.jit.si" android:scheme="https" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="org.jitsi.meet" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="hasanhocacanliders" />
-            </intent-filter>
-        </activity>
+            android:windowSoftInputMode="adjustResize" />
         <service
             android:name=".ScreenRecorderService"
             android:exported="false"

@@ -48,6 +48,14 @@ public class ScreenRecorderService extends Service {
     private ParcelFileDescriptor outputDescriptor;
     private Uri outputUri;
     private boolean started;
+    private boolean stopping;
+    public static final String ACTION_STATE = "com.hasanhoca.canliders.RECORDING_STATE";
+    public static boolean isRecording;
+    private void publishState(boolean active) {
+        isRecording = active;
+        Intent state = new Intent(ACTION_STATE); state.putExtra("active",active);
+        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).sendBroadcast(state);
+    }
 
     @Override
     public void onCreate() {
@@ -67,8 +75,13 @@ public class ScreenRecorderService extends Service {
             Intent resultData = Build.VERSION.SDK_INT >= 33
                     ? intent.getParcelableExtra(EXTRA_RESULT_DATA, Intent.class)
                     : intent.getParcelableExtra(EXTRA_RESULT_DATA);
-            startAsForeground();
-            startRecording(resultCode, resultData);
+            try {
+                startAsForeground();
+                startRecording(resultCode, resultData);
+            } catch (Exception e) {
+                publishState(false); stopRecording(false);
+                Toast.makeText(this,"Kayıt izni veya başlatma hatası: " + e.getMessage(),Toast.LENGTH_LONG).show();
+            }
         }
         return START_NOT_STICKY;
     }
@@ -163,6 +176,7 @@ public class ScreenRecorderService extends Service {
                     surface, null, null);
             recorder.start();
             started = true;
+            publishState(true);
         } catch (Exception error) {
             Toast.makeText(this, "Kayıt başlatılamadı: " + error.getMessage(), Toast.LENGTH_LONG).show();
             stopRecording(false);
@@ -170,6 +184,8 @@ public class ScreenRecorderService extends Service {
     }
 
     private void stopRecording(boolean save) {
+        if (stopping) return;
+        stopping = true;
         if (started && recorder != null) {
             try {
                 recorder.stop();
@@ -178,6 +194,7 @@ public class ScreenRecorderService extends Service {
             }
         }
         started = false;
+        publishState(false);
         if (recorder != null) {
             recorder.reset();
             recorder.release();
@@ -210,6 +227,7 @@ public class ScreenRecorderService extends Service {
         }
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
+        stopping = false;
     }
 
     private void createNotificationChannel() {

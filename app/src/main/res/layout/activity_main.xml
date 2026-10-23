@@ -109,7 +109,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:gravity="center"
-            android:text="Toplantıda Ekranı paylaş ve Kaydı aç düğmeleri üst tarafta görünür. Kayıt alırken katılımcılara haber verin."
+            android:text="Toplantı kontrolleri alt çubuktadır. Bu sürümde yerel kayıt ve ekran paylaşımı ayrı ayrı kullanılır. Kayıt alırken katılımcılara haber verin."
             android:textColor="#667085"
             android:textSize="13sp" />
     </LinearLayout>
